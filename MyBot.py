@@ -71,15 +71,14 @@ def away(me, them):
     else:
         return SOUTH if ty[1] > 0 else NORTH
 
+CORNERS=[(-1, -1), (-1, 1), (1, -1), (1, 1)]
 def isTunnel(location):
     x = location.x
     y = location.y
-    count = 0
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            if gameMap.fetchSite(x + dx, y + dy).owner == myID:
-                count += 1
-    return count == 3
+    for dx,dy in CORNERS:
+        if gameMap.fetchSite(x + dx, y + dy).owner == myID:
+            return False
+    return True
 
 def move(location):
     site = gameMap.getSite(location)
