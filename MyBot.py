@@ -113,11 +113,11 @@ def move(location):
     if len(blank) > 0:
         # take something if we can, or maybe move elsewhere
         edge_runs[location] = (0, STILL)
-        go = highest_production(strength, 0, blank)
+        go = highest_production(strength, 0 if strength > 10 else (1 if strength > 5 else 2), blank)
         if go != STILL:
             return go
 
-    if strength < 10 or strength < site.production * 5:
+    if strength < site.production * 6 and strength < 30:
         # just chill dude, you're still growing
         return STILL
 
@@ -161,7 +161,7 @@ while True:
                 go = move(location)
                 if go != STILL:
                     l = gameMap.getLocation(location, go)
-                    if l not in attacking or site.strength >= 255:
+                    if l not in attacking:
                         attacking[l] = location
                         moves.append(Move(location, go))
     sendFrame(moves)
