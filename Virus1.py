@@ -11,7 +11,7 @@ max_size2 = max_size // 2
 
 edge_runs = {}
 
-sendInit("Virus")
+sendInit("Virus1")
 
 
 def highest_production(me, tiles):

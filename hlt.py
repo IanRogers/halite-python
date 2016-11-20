@@ -105,11 +105,19 @@ class GameMap:
             else:
                 x -= 1
 
-        return self.locations[x][y]
+        return self.locations[y][x]
 
     def getSite(self, l, direction = STILL):
         loc = self.getLocation(l, direction)
         return self.fetchSite(loc.x, loc.y)
 
     def fetchSite(self, x, y):
-        return self.contents[x][y]
+        if x >= self.width:
+            x = 0
+        elif x < 0:
+            x = self.width - 1
+        if y >= self.height:
+            y = 0
+        elif y < 0:
+            y = self.height - 1
+        return self.contents[y][x]

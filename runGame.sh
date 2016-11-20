@@ -3,10 +3,12 @@
 rm -f *.log *.hlt
 
 if hash python3 2>/dev/null; then
-    ./halite -d "30 30" "python3 MyBot.py" "python3 RandomBot.py"
+    PY=python3
 else
-    ./halite -d "30 30" "python MyBot.py" "python RandomBot.py"
+    PY=python
 fi
+
+./halite -d "30 30" "$PY MyBot.py" "$PY Virus1.py"
 
 tail *.log
 echo

@@ -8,21 +8,18 @@ height = gameMap.height
 height2 = height // 2
 max_size = max(width, height) // 1.5
 
-sendInit("Virus")
+sendInit("Virus2")
 
 
-def highest_production(me, tiles):
+def highest_production(strength, min_production, tiles):
     # pick highest production tile we can conquer and we're not already attacking, or stay still to resist
-    max_production = 0
-    go = STILL
-    strength = me.strength
-    for who in tiles:
+    for who in sorted(tiles, key=lambda who: who[0].production, reverse=True):
         them = who[0]
-        if them.strength < strength and them.location not in attacking:
-            if them.production > max_production:
-                max_production = them.production
-                go = who[1]
-    return go
+        if them.location not in attacking:
+            if them.strength < strength:
+                if them.production >= min_production:
+                    return who[1]
+    return STILL
 
 
 def nearest_straight_edge(location, heading, lives):
@@ -74,6 +71,16 @@ def away(me, them):
     else:
         return SOUTH if ty[1] > 0 else NORTH
 
+def isTunnel(location):
+    x = location.x
+    y = location.y
+    count = 0
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            if gameMap.fetchSite(x + dx, y + dy).owner == myID:
+                count += 1
+    return count == 3
+
 def move(location):
     site = gameMap.getSite(location)
 
@@ -94,20 +101,36 @@ def move(location):
         else:
             enemy.append(who)
 
+    strength = site.strength
+    if strength == 0:
+        # no point trying to move a 0 piece
+        return STILL
+
     if len(enemy) > 0:
         # be agressive if we can, or defend
         edge_runs[location] = (0, STILL)
-        return highest_production(site, enemy)
+        return highest_production(strength, 0, enemy)
 
     if len(blank) > 0:
         # take something if we can, or maybe move elsewhere
         edge_runs[location] = (0, STILL)
-        go = highest_production(site, blank)
+        go = highest_production(strength, 0, blank)
         if go != STILL:
             return go
 
-    if site.strength < site.production * 5:
+    if strength < 10 or strength < site.production * 5:
         # just chill dude, you're still growing
+        return STILL
+
+    if len(me) == 1:
+        if last_count == 2 and count == 2:
+            # special case for game start
+            return me[0][1]
+        else:
+            return STILL
+
+    if len(me) == 3:
+        # flat edge
         return STILL
 
     if len(me) == 4:
@@ -115,22 +138,14 @@ def move(location):
         # move to nearest edge
         return nearest_edge(location)[1]
 
-    if len(me) == 2:
-        if count == 2:
-            # special case for game start
-            return me_d[0]
-        if NORTH in me_d and SOUTH in me_d:
-            # north-south corridor   
-            return me[0][1] if me[0][0].strength > me[1][0].strength else me[1][1]
-        if EAST in me_d and WEST in me_d:
-            # east-west corridor   
-            return me[0][1] if me[0][0].strength > me[1][0].strength else me[1][1]
+    if len(me) == 2 and isTunnel(location):
+        return me[0][1] if me[0][0].strength > me[1][0].strength else me[1][1]
 
-    # corner or flat edge, stay still
+    # corner
     return STILL
 
 
-
+last_count = 0
 while True:
     moves = []
     edge_runs = {}
@@ -145,7 +160,10 @@ while True:
                 location = site.location
                 count += 1
                 go = move(location)
-                if go != STILL and location not in attacking:
-                    attacking[location] = True
-                    moves.append(Move(location, go))
+                if go != STILL:
+                    l = gameMap.getLocation(location, go)
+                    if l not in attacking or site.strength >= 255:
+                        attacking[l] = location
+                        moves.append(Move(location, go))
     sendFrame(moves)
+    last_count = count
