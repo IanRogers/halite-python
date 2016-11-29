@@ -1,16 +1,12 @@
 #!/bin/bash
 
-OPP=$1
+ME=$1
+THEM=$2
+PY=python3
 
 rm -f *.log *.hlt
 
-if hash python3 2>/dev/null; then
-    PY=python3
-else
-    PY=python
-fi
-
-./halite -d "30 30" "$PY MyBot.py" "$PY $OPP"
+./halite -d "30 30" "$PY $ME" "$PY $THEM"
 
 tail *.log
 echo

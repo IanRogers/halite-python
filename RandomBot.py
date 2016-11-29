@@ -1,4 +1,4 @@
-from hlt import *
+from hlt_orig import *
 from networking import *
 
 myID, gameMap = getInit()
