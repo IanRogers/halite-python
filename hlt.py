@@ -25,6 +25,7 @@ def grouper(iterable, n, fillvalue=None):
 
 NORTH, EAST, SOUTH, WEST, STILL = range(5)
 CARDINALS = [NORTH, EAST, SOUTH, WEST]
+CORNERS = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
 
 def opposite_cardinal(direction):
     "Returns the opposing cardinal direction."
@@ -49,11 +50,20 @@ class GameMap:
     def __init__(self, size_string, production_string, my_id, map_string=None):
         self.width, self.height = tuple(map(int, size_string.split()))
         self.max_side = max(self.width, self.height)
+        self.map_size = self.width * self.height
         self.production = tuple(tuple(map(int, substring)) for substring in grouper(production_string.split(), self.width))
         self.contents = None
         self.my_id = my_id
         self.get_frame(map_string)
         self.starting_player_count = len(set(square.owner for square in self)) - 1
+        self.actor_counts = {}
+        for square in self:
+            o = square.owner
+            if o in self.actor_counts:
+                self.actor_counts[o] += 1
+            else:
+                self.actor_counts[o] = 1
+
 
     def get_frame(self, map_string=None):
         "Creates new map from the latest frame provided by the Halite game environment."
@@ -94,14 +104,38 @@ class GameMap:
         dx, dy = ((0, -1), (1, 0), (0, 1), (-1, 0), (0, 0))[direction]
         return self.contents[(square.y + dy) % self.height][(square.x + dx) % self.width]
 
-    def get_square(self, x, y) -> Square:
+    def get_square(self, x:int, y:int) -> Square:
         return self.contents[y % self.height][x % self.width]
 
-    def get_distance(self, sq1, sq2):
+    def get_distance(self, sq1:Square, sq2:Square) -> int:
         "Returns Manhattan distance between two squares."
         dx = min(abs(sq1.x - sq2.x), sq1.x + self.width - sq2.x, sq2.x + self.width - sq1.x)
         dy = min(abs(sq1.y - sq2.y), sq1.y + self.height - sq2.y, sq2.y + self.height - sq1.y)
         return dx + dy
+
+    def get_heading(self, sq1, sq2) -> (int, bool, int, int):
+        "Returns Manhattan distance and heading between two squares."
+        sdx = sq1.x - sq2.x
+        sdy = sq1.y - sq2.y
+        dx = min(abs(sdx), self.width - abs(sdx))
+        dy = min(abs(sdy), self.height - abs(sdy))
+
+        if dx == 0:
+            x_heading = STILL
+        elif (abs(sdx)) <= self.width // 2:
+            x_heading = EAST if sdx < 0 else WEST
+        else:
+            x_heading = EAST if sdx > 0 else WEST
+
+        if dy == 0:
+            y_heading = STILL
+        elif (abs(sdy)) <= self.height // 2:
+            y_heading = SOUTH if sdy < 0 else NORTH
+        else:
+            y_heading = SOUTH if sdy > 0 else NORTH
+
+        return dx + dy, dx > dy, x_heading, y_heading
+
 
     def nearest_straight_distance(self, square:Square, heading:int, lives:int) -> int:
         if square.edge_run != None:
