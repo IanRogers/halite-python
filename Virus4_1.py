@@ -1,18 +1,10 @@
 import hlt
-from hlt import NORTH, EAST, SOUTH, WEST, STILL, CARDINALS, Move, Square, Run
+from hlt import NORTH, EAST, SOUTH, WEST, STILL, CARDINALS, Move, Square
 
 myID, gameMap = hlt.get_init()
 last_count = 0
 
-hlt.send_init("Virus3")
-
-
-def highest_production(strength, tiles, min_production=0) -> int:
-    "pick highest production tile we can conquer, or stay still to resist"
-    target, direction = max((tile for tile in tiles if tile[0].strength < strength and tile[0].production >= min_production),
-                            default=(None, STILL),
-                            key=lambda t: t[0].production)
-    return direction
+hlt.send_init("Virus4_1")
 
 def move(square:Square) -> int:
     strength = square.strength
@@ -68,13 +60,9 @@ def move(square:Square) -> int:
     # corner or flat edge
     return STILL
 
-def best_attacker(attacking_me) -> Move:
-    assert attacking_me != []
-    return max(attacking_me, key=lambda a: a[0].strength)
 
 while True:
     count = 0
-    moves = []
     gameMap.get_frame()
     for square in gameMap:
         if square.owner == myID:
